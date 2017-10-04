@@ -1,0 +1,76 @@
+
+mario_all.png
+size: 1024,64
+format: RGBA8888
+filter: Nearest,Nearest
+repeat: none
+big_mario
+  rotate: false
+  xy: 339, 19
+  size: 336, 32
+  orig: 336, 32
+  offset: 0, 0
+  index: -1
+fire_mario
+  rotate: false
+  xy: 1, 3
+  size: 336, 48
+  orig: 336, 48
+  offset: 0, 0
+  index: -1
+fireball
+  rotate: false
+  xy: 677, 25
+  size: 32, 8
+  orig: 32, 8
+  offset: 0, 0
+  index: -1
+flag
+  rotate: false
+  xy: 1001, 35
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+flower
+  rotate: false
+  xy: 473, 1
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+goomba
+  rotate: false
+  xy: 405, 1
+  size: 48, 16
+  orig: 48, 16
+  offset: 0, 0
+  index: -1
+koopa
+  rotate: false
+  xy: 903, 27
+  size: 96, 24
+  orig: 96, 24
+  offset: 0, 0
+  index: -1
+little_mario
+  rotate: false
+  xy: 677, 35
+  size: 224, 16
+  orig: 224, 16
+  offset: 0, 0
+  index: -1
+mushroom
+  rotate: false
+  xy: 455, 1
+  size: 16, 16
+  orig: 16, 16
+  offset: 0, 0
+  index: -1
+star
+  rotate: false
+  xy: 339, 1
+  size: 64, 16
+  orig: 64, 16
+  offset: 0, 0
+  index: -1
