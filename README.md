@@ -6,7 +6,7 @@ This project contains the source code for an evolutionary algorithm optimized ar
 All code was written in Java using the libGDX game development framework and TensorFlow machine intelligence library.
 
 ## Screenshots
-![](https://github.com/artur-sak13/MarioFlowGDX/core/assets/gameplay.png)
+![](https://github.com/artur-sak13/MarioFlowGDX/blob/master/core/assets/gameplay.png)
 
 ## Development Setup
 1. Install Java JDK
