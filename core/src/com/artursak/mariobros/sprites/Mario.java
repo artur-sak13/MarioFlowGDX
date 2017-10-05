@@ -93,7 +93,7 @@ public class Mario extends Sprite {
 
     public void update(float dt) {
         if((screen.getHud().isTimeUp() || b2body.getPosition().y < 0) && !isDead()) {
-//            die();
+            die();
         }
 
         if(marioIsBig)
@@ -220,7 +220,7 @@ public class Mario extends Sprite {
                 timeToRedefineMario = true;
                 setBounds(getX(), getY(), getWidth(), getHeight() / 2);
             }
-//               die();
+               die();
         }
     }
 
@@ -231,7 +231,7 @@ public class Mario extends Sprite {
             world.destroyBody(b2body);
             b2body = null;
         } else
-            position = new Vector2(3100 / MarioBros.PPM, 32 / MarioBros.PPM);
+            position = new Vector2(32 / MarioBros.PPM, 32 / MarioBros.PPM);
 
         BodyDef bdef = new BodyDef();
         bdef.position.set((timeToDefineBigMario) ? position.add(0,10 / MarioBros.PPM) : position);
