@@ -1,6 +1,7 @@
 package com.artursak.mariobros;
 
-import com.artursak.mariobros.screens.PlayScreen;
+import com.artursak.mariobros.utils.ScreenManager;
+import com.artursak.mariobros.utils.ScreenManager.ScreenEnum;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
@@ -29,7 +30,8 @@ public class MarioBros extends Game {
 	@Override
 	public void create () {
 		batch = new SpriteBatch();
-		setScreen(new PlayScreen(this));
+		ScreenManager.getInstance().init(this);
+		ScreenManager.getInstance().showScreen(ScreenEnum.LEVEL_1_1);
 	}
 
     @Override

@@ -27,7 +27,6 @@ public class GameWorldCreator {
     private BodyDef bdef;
     private PolygonShape shape;
     private FixtureDef fdef;
-    private Body body;
 
     public GameWorldCreator(PlayScreen screen) {
         this.screen = screen;
@@ -58,7 +57,7 @@ public class GameWorldCreator {
                     bdef.type = BodyDef.BodyType.StaticBody;
                     bdef.position.set((rect.getX() + rect.getWidth() / 2) / MarioBros.PPM, (rect.getY() + rect.getHeight() / 2) / MarioBros.PPM);
 
-                    body = world.createBody(bdef);
+                    Body body = world.createBody(bdef);
 
                     shape.setAsBox(rect.getWidth() / 2 / MarioBros.PPM, rect.getHeight() / 2 / MarioBros.PPM);
                     fdef.shape = shape;

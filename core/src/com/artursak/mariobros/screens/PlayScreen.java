@@ -7,10 +7,10 @@ import com.artursak.mariobros.sprites.items.*;
 import com.artursak.mariobros.sprites.Mario;
 import com.artursak.mariobros.sprites.tile_objects.FlagPole;
 import com.artursak.mariobros.utils.GameWorldCreator;
+import com.artursak.mariobros.utils.ScreenManager;
 import com.artursak.mariobros.utils.WorldContactListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
@@ -20,45 +20,36 @@ import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
 
-import java.util.concurrent.LinkedBlockingQueue;
-
-public class PlayScreen implements Screen {
-    private MarioBros game;
+public class PlayScreen extends AbstractScreen {
     private TextureAtlas atlas;
 
     private OrthographicCamera camera;
-    private Viewport gamePort;
     private Hud hud;
 
     private TiledMap map;
     private OrthogonalTiledMapRenderer renderer;
 
-    private World world;
     private Box2DDebugRenderer b2dr;
     private GameWorldCreator creator;
 
     private Mario player;
     private FlagPole flag;
 
-    private Array<Item> items;
-    private LinkedBlockingQueue<ItemDef> itemsToSpawn;
+    public PlayScreen(MarioBros game, String level) {
+        super(game);
 
-    public PlayScreen(MarioBros game) {
-        this.game = game;
 
         atlas = new TextureAtlas("mario_all.pack");
         camera = new OrthographicCamera();
-        gamePort = new FitViewport(MarioBros.V_WIDTH / MarioBros.PPM, MarioBros.V_HEIGHT / MarioBros.PPM, camera);
+        viewport = new FitViewport(MarioBros.V_WIDTH / MarioBros.PPM, MarioBros.V_HEIGHT / MarioBros.PPM, camera);
         hud = new Hud(game.batch);
 
-        map = new TmxMapLoader().load("level1_1.tmx");
+        map = new TmxMapLoader().load(level);
         renderer = new OrthogonalTiledMapRenderer(map, 1 / MarioBros.PPM);
 
-        camera.position.set(gamePort.getWorldWidth() / 2, gamePort.getWorldHeight() / 2, 0);
+        camera.position.set(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2, 0);
 
         world = new World(new Vector2(0,-10), true);
         b2dr = new Box2DDebugRenderer();
@@ -69,18 +60,11 @@ public class PlayScreen implements Screen {
 
         world.setContactListener(new WorldContactListener());
 
-        items = new Array<Item>();
-        itemsToSpawn = new LinkedBlockingQueue<ItemDef>();
-
-    }
-
-    public void spawnItem(ItemDef idef) {
-        itemsToSpawn.add(idef);
     }
 
     private void handleSpawningItems() {
-        if(!itemsToSpawn.isEmpty()) {
-            ItemDef idef = itemsToSpawn.poll();
+        if(!spawningItems.isEmpty()) {
+            ItemDef idef = spawningItems.poll();
             if(idef.type == Mushroom.class)
                 items.add(new Mushroom(this, idef.position.x, idef.position.y));
             else if(idef.type == Flower.class)
@@ -131,7 +115,7 @@ public class PlayScreen implements Screen {
         hud.update(dt);
 
         if(player.currentState != Mario.State.DEAD)
-            camera.position.x = MathUtils.clamp(player.b2body.getPosition().x, gamePort.getWorldWidth() / 2, (227 * 16) / MarioBros.PPM);
+            camera.position.x = MathUtils.clamp(player.b2body.getPosition().x, viewport.getWorldWidth() / 2, (227 * 16) / MarioBros.PPM);
 
         camera.update();
         renderer.setView(camera);
@@ -158,6 +142,7 @@ public class PlayScreen implements Screen {
 
         for(Enemy enemy : creator.getEnemies())
             enemy.draw(game.batch);
+
         for(Item item : items)
             item.draw(game.batch);
 
@@ -167,10 +152,10 @@ public class PlayScreen implements Screen {
         hud.stage.draw();
 
         if(gameOver()) {
-            game.setScreen(new GameOverScreen(game));
+            ScreenManager.getInstance().showScreen(ScreenManager.ScreenEnum.GAME_OVER);
             dispose();
         } else if(goal()) {
-            game.setScreen(new GameWinScreen(game));
+            ScreenManager.getInstance().showScreen(ScreenManager.ScreenEnum.GAME_WIN);
             dispose();
         }
     }
@@ -189,7 +174,7 @@ public class PlayScreen implements Screen {
 
     @Override
     public void resize(int width, int height) {
-        gamePort.update(width, height);
+        viewport.update(width, height);
     }
 
     public TiledMap getMap() {

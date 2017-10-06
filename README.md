@@ -31,7 +31,7 @@ java -jar MarioBros.jar
 * Up arrow or W -> Jump
 * Spacebar -> Fireball
 
-*Note: Fire mario and stars items are not yet implemented so Mario can throw fireballs from the start.*
+*Note: Fire Mario and stars items are not yet implemented so Mario can throw fireballs from the start.*
 
 ## Other
 Check out all of my projects!
