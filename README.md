@@ -21,7 +21,7 @@ git clone https://github.com/artur-sak13/MarioFlowGDX.git
 7. Run the project and have fun!
 
 ## Usage
-You can either run com.artursak.mariobros.desktop as a Java application to build the project or by running the `.jar` file
+You can either run com.artursak.mariobros.desktop as a Java application to build the project or run the `.jar` file
 ```sh
 java -jar MarioBros.jar
 ```
@@ -36,4 +36,4 @@ java -jar MarioBros.jar
 ## Other
 Check out all of my projects!
 
-[https://github.com/artur-sak13/](https://github.com/artur/)
+[https://github.com/artur-sak13/](https://github.com/artur-sak13/)

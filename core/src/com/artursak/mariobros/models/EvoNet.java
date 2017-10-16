@@ -7,12 +7,12 @@ import org.tensorflow.TensorFlow;
 
 public class EvoNet {
 
-    public Graph graph;
+    public final Graph  graph;
     public final String value;
 
     public EvoNet() {
         graph = new Graph();
-        value  = "" + TensorFlow.version();
+        value = "" + TensorFlow.version();
         Gdx.app.log("Hello from", value);
     }
 }

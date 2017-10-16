@@ -2,187 +2,176 @@ package com.artursak.mariobros.screens;
 
 import com.artursak.mariobros.MarioBros;
 import com.artursak.mariobros.overlays.Hud;
-import com.artursak.mariobros.sprites.enemies.Enemy;
-import com.artursak.mariobros.sprites.items.*;
 import com.artursak.mariobros.sprites.Mario;
+import com.artursak.mariobros.sprites.enemies.Enemy;
+import com.artursak.mariobros.sprites.items.Flower;
+import com.artursak.mariobros.sprites.items.Item;
+import com.artursak.mariobros.sprites.items.ItemDef;
+import com.artursak.mariobros.sprites.items.Mushroom;
 import com.artursak.mariobros.sprites.tile_objects.FlagPole;
+import com.artursak.mariobros.utils.BodyFactory;
 import com.artursak.mariobros.utils.GameWorldCreator;
-import com.artursak.mariobros.utils.ScreenManager;
 import com.artursak.mariobros.utils.WorldContactListener;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
+import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
 public class PlayScreen extends AbstractScreen {
-    private TextureAtlas atlas;
 
-    private OrthographicCamera camera;
-    private Hud hud;
-
-    private TiledMap map;
-    private OrthogonalTiledMapRenderer renderer;
+    private final TiledMap                   map;
+    private       TextureAtlas               atlas;
+    private       Hud                        hud;
+    private       OrthogonalTiledMapRenderer renderer;
 
     private Box2DDebugRenderer b2dr;
-    private GameWorldCreator creator;
+    private GameWorldCreator   creator;
 
-    private Mario player;
+    private Mario    mario;
     private FlagPole flag;
+
+    private float mapWidth;
 
     public PlayScreen(MarioBros game, String level) {
         super(game);
-
-
-        atlas = new TextureAtlas("mario_all.pack");
-        camera = new OrthographicCamera();
-        viewport = new FitViewport(MarioBros.V_WIDTH / MarioBros.PPM, MarioBros.V_HEIGHT / MarioBros.PPM, camera);
-        hud = new Hud(game.batch);
-
         map = new TmxMapLoader().load(level);
-        renderer = new OrthogonalTiledMapRenderer(map, 1 / MarioBros.PPM);
-
-        camera.position.set(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2, 0);
-
-        world = new World(new Vector2(0,-10), true);
-        b2dr = new Box2DDebugRenderer();
-
-        player = new Mario(this);
-
-        creator = new GameWorldCreator(this);
-
-        world.setContactListener(new WorldContactListener());
-
-    }
-
-    private void handleSpawningItems() {
-        if(!spawningItems.isEmpty()) {
-            ItemDef idef = spawningItems.poll();
-            if(idef.type == Mushroom.class)
-                items.add(new Mushroom(this, idef.position.x, idef.position.y));
-            else if(idef.type == Flower.class)
-                items.add(new Flower(this, idef.position.x, idef.position.y));
-        }
-    }
-
-    public TextureAtlas getAtlas() {
-        return atlas;
+//        mapWidth = ((TiledMapTileLayer) map.getLayers().get(0)).getWidth();
     }
 
     @Override
     public void show() {
+        viewport = new FitViewport(MarioBros.V_WIDTH / MarioBros.PPM, MarioBros.V_HEIGHT / MarioBros.PPM, camera);
+        camera.position.set(viewport.getWorldWidth() / 2, viewport.getWorldHeight() / 2, 0);
 
-    }
+        atlas = new TextureAtlas("mario_all.pack");
 
-    private void handleInput() {
-        if(player.currentState != Mario.State.DEAD) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.UP) || Gdx.input.isKeyJustPressed(Input.Keys.W))
-                player.jump();
-            else if ((Gdx.input.isKeyPressed(Input.Keys.RIGHT) || Gdx.input.isKeyPressed(Input.Keys.D)) && player.b2body.getLinearVelocity().x <= 2)
-                player.b2body.applyLinearImpulse(new Vector2(0.1f, 0), player.b2body.getWorldCenter(), true);
-            else if ((Gdx.input.isKeyPressed(Input.Keys.LEFT) || Gdx.input.isKeyPressed(Input.Keys.A)) && player.b2body.getLinearVelocity().x >= -2)
-                player.b2body.applyLinearImpulse(new Vector2(-0.1f, 0), player.b2body.getWorldCenter(), true);
-            else if(Gdx.input.isKeyJustPressed(Input.Keys.SPACE))
-                player.fire();
-        }
-    }
+        world = new World(MarioBros.GRAVITY, true);
+        world.setContactListener(new WorldContactListener());
+        BodyFactory.getInstance().init(world);
 
-    public void update(float dt) {
-        handleInput();
-        handleSpawningItems();
+        creator = new GameWorldCreator(this);
+        renderer = new OrthogonalTiledMapRenderer(map, 1 / MarioBros.PPM);
 
-        world.step(1f / 60f, 6, 2);
+        hud = new Hud(game.batch);
 
-        player.update(dt);
-        flag.update(dt);
+        float cameraLeftLimit  = (MarioBros.V_WIDTH / MarioBros.PPM) / 2;
+        float cameraRightLimit = mapWidth - (MarioBros.V_WIDTH / MarioBros.PPM) / 2;
 
-        for(Enemy enemy : creator.getEnemies()) {
-            enemy.update(dt);
-            if(!enemy.isDead() && (enemy.getX() < player.getX() + 224 / MarioBros.PPM))
-                enemy.b2body.setActive(true);
-        }
+        b2dr = new Box2DDebugRenderer(true, true, false, false, false, false);
 
-        for(Item item : items)
-            item.update(dt);
+        mario = new Mario(this);
 
-        hud.update(dt);
-
-        if(player.currentState != Mario.State.DEAD)
-            camera.position.x = MathUtils.clamp(player.b2body.getPosition().x, viewport.getWorldWidth() / 2, (227 * 16) / MarioBros.PPM);
-
-        camera.update();
-        renderer.setView(camera);
     }
 
     @Override
     public void render(float delta) {
         update(delta);
 
-        Gdx.gl.glClearColor(0,0,0,1);
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        renderer.render();
-
-        b2dr.render(world, camera.combined);
+        renderer.render(new int[]{0, 1});
 
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
-
-        player.draw(game.batch);
         flag.draw(game.batch);
 
 
-        for(Enemy enemy : creator.getEnemies())
+        for (Enemy enemy : creator.getEnemies())
             enemy.draw(game.batch);
 
-        for(Item item : items)
+        for (Item item : items)
             item.draw(game.batch);
+
+        mario.draw(game.batch);
 
         game.batch.end();
 
         game.batch.setProjectionMatrix(hud.stage.getCamera().combined);
         hud.stage.draw();
 
-        if(gameOver()) {
-            ScreenManager.getInstance().showScreen(ScreenManager.ScreenEnum.GAME_OVER);
+        b2dr.render(world, camera.combined);
+
+        if (gameOver()) {
+            game.changeScreen(MarioBros.ScreenEnum.GAME_OVER);
             dispose();
-        } else if(goal()) {
-            ScreenManager.getInstance().showScreen(ScreenManager.ScreenEnum.GAME_WIN);
+        } else if (goal()) {
+            game.changeScreen(MarioBros.ScreenEnum.GAME_WIN);
             dispose();
         }
     }
 
-    public void setFlag(FlagPole flag) {
-        this.flag = flag;
+    private void update(float dt) {
+        handleSpawningItems();
+
+        world.step(1 / 60f, 6, 2);
+        flag.update(dt);
+
+        for (Enemy enemy : creator.getEnemies()) {
+            enemy.update(dt);
+            if (!enemy.isDead() && (enemy.getX() < mario.getX() + 224 / MarioBros.PPM))
+                enemy.b2body.setActive(true);
+        }
+
+        for (Item item : items)
+            item.update(dt);
+
+        mario.update(dt);
+
+//        float targetX = camera.position.x;
+        if (!mario.isDead())
+            camera.position.x = MathUtils.clamp(mario.b2body.getPosition().x, viewport.getWorldWidth() / 2, (227 * 16) / MarioBros.PPM);
+//            targetX = camera.position.x = MathUtils.clamp(mario.b2body.getPosition().x, cameraLeftLimit, cameraRightLimit);
+
+//        camera.position.x = MathUtils.lerp(camera.position.x, targetX, 0.1f);
+//        if(Math.abs(camera.position.x - targetX) < 0.1f)
+//            camera.position.x = targetX;
+
+        camera.update();
+        renderer.setView(camera);
+
+        hud.update(dt);
+
+        cleanUp();
     }
 
+//    public float getMapWidth() { return mapWidth; }
+
     private boolean gameOver() {
-        return (player.currentState == Mario.State.DEAD && player.getStateTimer() > 3);
+        return (mario.currentState == Mario.State.DYING && mario.getStateTimer() > 3);
     }
 
     private boolean goal() {
-        return (player.currentState == Mario.State.WIN && player.getStateTimer() > 3 && FlagPole.Flag.staticBod);
+        return (mario.currentState == Mario.State.WINNING && mario.getStateTimer() > 3 && FlagPole.isStatic());
+    }
+
+    private void handleSpawningItems() {
+        if (!spawningItems.isEmpty()) {
+            ItemDef idef = spawningItems.poll();
+            if (idef.type == Mushroom.class)
+                items.add(new Mushroom(this, idef.position.x, idef.position.y));
+            else if (idef.type == Flower.class)
+                items.add(new Flower(this, idef.position.x, idef.position.y));
+        }
+    }
+
+    private void cleanUp() {
+        for (int i = 0; i < items.size; i++) {
+            if (items.get(i).isDestroyed())
+                items.removeIndex(i);
+        }
     }
 
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height);
-    }
-
-    public TiledMap getMap() {
-        return map;
-    }
-
-    public World getWorld() {
-        return world;
     }
 
     @Override
@@ -207,6 +196,23 @@ public class PlayScreen extends AbstractScreen {
         world.dispose();
         b2dr.dispose();
         hud.dispose();
+        atlas.dispose();
+    }
+
+    public TextureAtlas getAtlas() {
+        return atlas;
+    }
+
+    public TiledMap getMap() {
+        return map;
+    }
+
+    public World getWorld() {
+        return world;
+    }
+
+    public void setFlag(FlagPole flag) {
+        this.flag = flag;
     }
 
     public Hud getHud() {

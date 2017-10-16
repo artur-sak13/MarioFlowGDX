@@ -9,31 +9,36 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.World;
 
 public abstract class Enemy extends Sprite {
-    protected World world;
-    protected PlayScreen screen;
-    public Body b2body;
-    Vector2 velocity;
+    protected final World      world;
+    protected final PlayScreen screen;
+    final           Vector2    velocity;
+    public          Body       b2body;
 
     Enemy(PlayScreen screen, float x, float y) {
         this.world = screen.getWorld();
         this.screen = screen;
         setPosition(x, y);
         defineEnemy();
-        velocity = new Vector2(-1,-2);
+        velocity = new Vector2(-1, -2);
         b2body.setActive(false);
     }
 
     protected abstract void defineEnemy();
+
     public abstract void update(float dt);
+
     public abstract void hitOnHead(Mario mario);
+
     public abstract void flamed(FireBall fireball);
+
     public abstract void onEnemyHit(Enemy enemy);
+
     public abstract boolean isDead();
 
     public void reverseVelocity(boolean x, boolean y) {
-        if(x)
+        if (x)
             velocity.x = -velocity.x;
-        if(y)
+        if (y)
             velocity.y = -velocity.y;
     }
 }

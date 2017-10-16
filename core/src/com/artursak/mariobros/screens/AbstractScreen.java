@@ -12,16 +12,18 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class AbstractScreen implements Screen {
-    MarioBros game;
-    protected Viewport viewport;
-    protected World world;
-    protected Array<Item> items;
-    protected LinkedBlockingQueue<ItemDef> spawningItems;
+public abstract class AbstractScreen implements Screen {
+    protected final MarioBros                    game;
+    protected final OrthographicCamera           camera;
+    protected final Array<Item>                  items;
+    protected final LinkedBlockingQueue<ItemDef> spawningItems;
+    protected       Viewport                     viewport;
+    protected       World                        world;
 
-    public AbstractScreen(MarioBros game) {
+    AbstractScreen(MarioBros game) {
         this.game = game;
-        viewport = new FitViewport(MarioBros.V_WIDTH, MarioBros.V_HEIGHT, new OrthographicCamera());
+        camera = new OrthographicCamera();
+        viewport = new FitViewport(MarioBros.V_WIDTH, MarioBros.V_HEIGHT, camera);
         items = new Array<Item>();
         spawningItems = new LinkedBlockingQueue<ItemDef>();
     }

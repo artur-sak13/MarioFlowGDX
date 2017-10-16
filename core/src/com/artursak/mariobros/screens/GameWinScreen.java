@@ -1,8 +1,6 @@
 package com.artursak.mariobros.screens;
 
 import com.artursak.mariobros.MarioBros;
-import com.artursak.mariobros.utils.ScreenManager;
-import com.artursak.mariobros.utils.ScreenManager.ScreenEnum;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -12,7 +10,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
 
 public class GameWinScreen extends AbstractScreen {
-    private Stage stage;
+    private final Stage stage;
 
     public GameWinScreen(MarioBros game) {
         super(game);
@@ -24,7 +22,7 @@ public class GameWinScreen extends AbstractScreen {
         table.center();
         table.setFillParent(true);
 
-        Label gameOverLabel = new Label("CONGRATULATIONS YOU WIN!!", font);
+        Label gameOverLabel  = new Label("CONGRATULATIONS YOU WIN!!", font);
         Label playAgainLabel = new Label("Click to Play Again", font);
 
         table.add(gameOverLabel).expandX();
@@ -41,11 +39,11 @@ public class GameWinScreen extends AbstractScreen {
 
     @Override
     public void render(float delta) {
-        if(Gdx.input.justTouched()) {
-            ScreenManager.getInstance().showScreen(ScreenEnum.LEVEL_1_1);
+        if (Gdx.input.justTouched()) {
+            game.changeScreen(MarioBros.ScreenEnum.PLAY_SCREEN);
             dispose();
         }
-        Gdx.gl.glClearColor(0,0,0,1);
+        Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.draw();
     }
