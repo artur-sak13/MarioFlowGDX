@@ -83,14 +83,6 @@ public class WorldContactListener implements ContactListener {
                 else
                     ((InteractiveTileObject) fixB.getUserData()).onHeadHit((Mario) fixA.getUserData());
                 break;
-            case MarioBros.FLAG_BIT | MarioBros.MARIO_BIT:
-            case MarioBros.FLAG_BIT | MarioBros.MARIO_HEAD_BIT:
-                if (fixA.getFilterData().categoryBits == MarioBros.FLAG_BIT)
-                    ((FlagPole.Flag) fixA.getUserData()).pullFlag((Mario) fixB.getUserData());
-                else
-                    ((FlagPole.Flag) fixB.getUserData()).pullFlag((Mario) fixA.getUserData());
-                break;
-
         }
     }
 

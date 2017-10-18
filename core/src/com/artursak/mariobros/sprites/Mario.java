@@ -13,10 +13,7 @@ import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.Filter;
-import com.badlogic.gdx.physics.box2d.Fixture;
-import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.utils.Array;
 
 public class Mario extends Sprite {
@@ -25,9 +22,11 @@ public class Mario extends Sprite {
     private final float ACCELERATED_FORCE     = 0.18f;
     private final float ACCELERATED_MAX_SPEED = 4f;
     private final World                    world;
+    private       float                    flagPosition;
     private final TextureRegion            marioStand;
     private final TextureRegion            marioBrake;
     private final Animation<TextureRegion> marioRun;
+    private final Animation<TextureRegion> marioClimb;
     private final TextureRegion            marioJump;
     private final TextureRegion            marioDead;
     private final TextureRegion            bigMarioStand;
@@ -44,11 +43,12 @@ public class Mario extends Sprite {
     private       float                    stateTimer;
     private       boolean                  runningRight;
     private       boolean                  marioIsBig;
+    private       boolean                  completeLevel;
     private       boolean                  isDead;
-    private       boolean                  runGrowAnimation;
     private       boolean                  brake;
     private       boolean                  grow;
     private       boolean                  shrink;
+    private       boolean                  climb;
     private       boolean                  marioWins;
 
     public Mario(PlayScreen screen) {
@@ -91,6 +91,11 @@ public class Mario extends Sprite {
         }
         shrinkMario = new Animation<TextureRegion>(0.15f, frames);
 
+        frames.clear();
+        for (int i = 7; i < 9; i++)
+            frames.add(new TextureRegion(screen.getAtlas().findRegion("little_mario"), i * 16, 0, 16, 16));
+        marioClimb = new Animation<TextureRegion>(0.1f, frames);
+
         marioDead = new TextureRegion(screen.getAtlas().findRegion("little_mario"), 96, 0, 16, 16);
 
         currentState = State.STANDING;
@@ -98,12 +103,13 @@ public class Mario extends Sprite {
         stateTimer = 0;
 
         runningRight = true;
-//        runGrowAnimation = false;
         grow = false;
         brake = false;
         shrink = false;
+        climb = false;
         marioIsBig = false;
         isDead = false;
+        completeLevel = false;
         marioWins = false;
 
         setBounds(0, 0, 16 / MarioBros.PPM, 16 / MarioBros.PPM);
@@ -121,7 +127,7 @@ public class Mario extends Sprite {
             world.destroyBody(b2body);
             b2body = null;
         } else
-            position = new Vector2(32 / MarioBros.PPM, 32 / MarioBros.PPM);
+            position = new Vector2(2900 / MarioBros.PPM, 32 / MarioBros.PPM);
 
         b2body = (grow)
                  ? BodyFactory.getInstance().makeBody(position, 6f, -14, MarioBros.MARIO_BIT)
@@ -138,12 +144,16 @@ public class Mario extends Sprite {
     }
 
     public void update(float dt) {
+        if (completeLevel)
+            finishLevel();
+        if (marioWins && stateTimer > 0.75f)
+            setColor(0, 0, 0, 0);
 
         if ((screen.getHud().isTimeUp() || b2body.getPosition().y < 0f) && !isDead()) {
             die();
         }
 
-        if (!isDead && !marioWins) {
+        if (!isDead && !marioWins && !climb) {
             handleInput();
         }
 
@@ -154,9 +164,6 @@ public class Mario extends Sprite {
 
         setRegion(getFrame(dt));
 
-
-//        if(grow || shrink)
-//            createMario();
 
         for (FireBall ball : fireballs) {
             ball.update(dt);
@@ -178,6 +185,11 @@ public class Mario extends Sprite {
                 fixture.setFilterData(filter);
             b2body.applyLinearImpulse(new Vector2(0, 4f), b2body.getWorldCenter(), true);
         }
+    }
+
+    private void walkRight() {
+        runningRight = true;
+        b2body.applyLinearImpulse(new Vector2(NORMAL_FORCE, 0), b2body.getWorldCenter(), true);
     }
 
     private void handleInput() {
@@ -205,11 +217,14 @@ public class Mario extends Sprite {
             grow();
         else if (Gdx.input.isKeyJustPressed(Input.Keys.G) && marioIsBig && !grow)
             shrink();
+        else if (Gdx.input.isKeyJustPressed(Input.Keys.C) && !climb)
+            climb = true;
     }
 
     private TextureRegion getFrame(float dt) {
         currentState = getState();
         TextureRegion region;
+        Filter        filter;
 
         switch (currentState) {
             case DYING:
@@ -223,16 +238,28 @@ public class Mario extends Sprite {
                 }
                 break;
             case SHRINKING:
-//                Gdx.app.log("Animation: ",  "Shrinking");
                 setPosition(b2body.getPosition().x - getWidth() / 2, b2body.getPosition().y - 22 / MarioBros.PPM);
                 region = shrinkMario.getKeyFrame(stateTimer, false);
-                Filter filter = new Filter();
+                filter = new Filter();
                 filter.maskBits = MarioBros.GROUND_BIT | MarioBros.ITEM_BIT | MarioBros.OBJECT_BIT;
 
                 for (Fixture fixture : b2body.getFixtureList())
                     fixture.setFilterData(filter);
                 if (shrinkMario.isAnimationFinished(stateTimer)) {
                     createMario();
+                }
+                break;
+            case CLIMBING:
+                region = marioClimb.getKeyFrame(stateTimer, false);
+                filter = new Filter();
+                filter.maskBits = MarioBros.GROUND_BIT | MarioBros.ITEM_BIT | MarioBros.OBJECT_BIT;
+
+                for (Fixture fixture : b2body.getFixtureList())
+                    fixture.setFilterData(filter);
+
+                if (stateTimer > 2.5f) {
+                    climb = false;
+                    b2body.setType(BodyDef.BodyType.DynamicBody);
                 }
                 break;
             case JUMPING:
@@ -280,7 +307,6 @@ public class Mario extends Sprite {
     public void grow() {
         if (!marioIsBig) {
             grow = true;
-//            runGrowAnimation = true;
             marioIsBig = true;
             setBounds(getX(), getY(), getWidth(), getHeight() * 2);
         }
@@ -303,6 +329,8 @@ public class Mario extends Sprite {
             return State.GROWING;
         else if (shrink)
             return State.SHRINKING;
+        else if (climb)
+            return State.CLIMBING;
         else if (isJumping())
             return State.JUMPING;
         else if (b2body.getLinearVelocity().y < 0)
@@ -338,8 +366,32 @@ public class Mario extends Sprite {
         }
     }
 
-    public void goal() {
-        marioWins = true;
+    public void finishLevel() {
+        if (climb) {
+            if (b2body.getPosition().y <= 60 / MarioBros.PPM) {
+                runningRight = false;
+                b2body.setTransform(flagPosition + 14 / MarioBros.PPM, b2body.getPosition().y, 0);
+                b2body.setType(BodyDef.BodyType.StaticBody);
+            } else {
+                runningRight = true;
+                b2body.setTransform(flagPosition + 4 / MarioBros.PPM, b2body.getPosition().y, 0);
+            }
+
+            b2body.setLinearVelocity(new Vector2(0, -0.70f));
+        } else {
+            if (getX() < 32.75f)
+                b2body.applyLinearImpulse(new Vector2(b2body.getMass() * (1.0f - b2body.getLinearVelocity().x), 0.0f), b2body.getWorldCenter(), true);
+            else {
+                marioWins = true;
+            }
+        }
+
+    }
+
+    public void goal(float flagPosition) {
+        climb = true;
+        completeLevel = true;
+        this.flagPosition = flagPosition;
     }
 
     @Override
@@ -359,6 +411,7 @@ public class Mario extends Sprite {
         GROWING,
         SHRINKING,
         BRAKING,
+        CLIMBING,
         DYING,
         WINNING
     }

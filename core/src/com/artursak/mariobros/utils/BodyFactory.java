@@ -20,8 +20,8 @@ public class BodyFactory {
                                                         | MarioBros.ITEM_BIT
                                                         | MarioBros.ENEMY_BIT
                                                         | MarioBros.ENEMY_HEAD_BIT
-                                                        | MarioBros.FLAGPOLE_BIT
-                                                        | MarioBros.FLAG_BIT;
+                                                        | MarioBros.FLAGPOLE_BIT;
+
     private static final    short       FIREBALL_MASK = BASE_MASK
                                                         | MarioBros.ENEMY_BIT
                                                         | MarioBros.ENEMY_HEAD_BIT;
@@ -173,20 +173,4 @@ public class BodyFactory {
         return body;
     }
 
-    public PrismaticJoint connectPrismaticJoint(Body bodyA, Body bodyB) {
-        PrismaticJointDef pDef = new PrismaticJointDef();
-        pDef.enableMotor = true;
-        pDef.localAnchorA.set(0, 0);
-        pDef.localAxisA.set(0, 1);
-        pDef.motorSpeed = 1;
-        pDef.maxMotorForce = 500;
-        pDef.bodyA = bodyA;
-        pDef.bodyB = bodyB;
-        pDef.collideConnected = false;
-
-        pDef.enableLimit = true;
-        pDef.upperTranslation = 0 / MarioBros.PPM;
-        pDef.lowerTranslation = -130 / MarioBros.PPM;
-        return ((PrismaticJoint) world.createJoint(pDef));
-    }
 }

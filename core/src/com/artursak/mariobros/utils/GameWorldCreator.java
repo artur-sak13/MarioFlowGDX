@@ -49,7 +49,7 @@ public class GameWorldCreator {
                 case 1:
                     Vector2 position = new Vector2((rect.getX() + rect.getWidth() / 2) / MarioBros.PPM, (rect.getY() + rect.getHeight() / 2) / MarioBros.PPM);
                     Vector2 boxDims = new Vector2(rect.getWidth() / 2 / MarioBros.PPM, rect.getHeight() / 2 / MarioBros.PPM);
-                    short catbit = (idx == 3) ? MarioBros.OBJECT_BIT : MarioBros.NOTHING_BIT;
+                    short catbit = (idx == 3) ? MarioBros.OBJECT_BIT : MarioBros.GROUND_BIT;
                     BodyFactory.getInstance().makeBody(position, boxDims, catbit, BodyDef.BodyType.StaticBody);
                     break;
                 case 4:

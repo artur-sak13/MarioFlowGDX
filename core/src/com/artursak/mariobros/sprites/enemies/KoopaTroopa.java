@@ -56,31 +56,6 @@ public class KoopaTroopa extends Enemy {
 
     }
 
-    private TextureRegion getFrame(float dt) {
-        TextureRegion region;
-
-        switch (currentState) {
-            case STANDING_SHELL:
-            case MOVING_SHELL:
-                region = shell;
-                break;
-            case WALKING:
-            default:
-                region = walkAnimation.getKeyFrame(stateTime, true);
-                break;
-        }
-
-        if (velocity.x > 0 && !region.isFlipX()) {
-            region.flip(true, false);
-        }
-        if (velocity.x < 0 && region.isFlipX()) {
-            region.flip(true, false);
-        }
-        stateTime = currentState == previousState ? stateTime + dt : 0;
-        previousState = currentState;
-        return region;
-    }
-
     @Override
     public void hitOnHead(Mario mario) {
         if (currentState != State.STANDING_SHELL) {
@@ -116,6 +91,31 @@ public class KoopaTroopa extends Enemy {
     @Override
     public boolean isDead() {
         return (currentState == State.DEAD);
+    }
+
+    private TextureRegion getFrame(float dt) {
+        TextureRegion region;
+
+        switch (currentState) {
+            case STANDING_SHELL:
+            case MOVING_SHELL:
+                region = shell;
+                break;
+            case WALKING:
+            default:
+                region = walkAnimation.getKeyFrame(stateTime, true);
+                break;
+        }
+
+        if (velocity.x > 0 && !region.isFlipX()) {
+            region.flip(true, false);
+        }
+        if (velocity.x < 0 && region.isFlipX()) {
+            region.flip(true, false);
+        }
+        stateTime = currentState == previousState ? stateTime + dt : 0;
+        previousState = currentState;
+        return region;
     }
 
     private void killed() {

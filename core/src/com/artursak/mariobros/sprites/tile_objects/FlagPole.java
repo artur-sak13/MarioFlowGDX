@@ -13,16 +13,18 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Fixture;
 import com.badlogic.gdx.physics.box2d.World;
-import com.badlogic.gdx.physics.box2d.joints.PrismaticJoint;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.actions.MoveToAction;
 
 public class FlagPole extends InteractiveTileObject {
     public static Flag flag;
-    private       Body anchor;
+    private       Body flagStart;
 
     public FlagPole(PlayScreen screen, MapObject object) {
         super(screen, object);
         flag = null;
-        anchor = null;
+        flagStart = null;
         setCategoryFilter(MarioBros.FLAGPOLE_BIT);
         fixture.setUserData(this);
         createAnchor();
@@ -33,14 +35,10 @@ public class FlagPole extends InteractiveTileObject {
         Vector2 position = new Vector2(body.getPosition().x - 8 / MarioBros.PPM, body.getPosition().y + 64 / MarioBros.PPM);
         Vector2 boxDims  = new Vector2(16 / 2 / MarioBros.PPM, 16 / 2 / MarioBros.PPM);
 
-        anchor = BodyFactory.getInstance().makeBody(position, boxDims, MarioBros.NOTHING_BIT, BodyDef.BodyType.StaticBody);
-        for (Fixture fixture : anchor.getFixtureList())
+        flagStart = BodyFactory.getInstance().makeBody(position, boxDims, MarioBros.FLAG_BIT, BodyDef.BodyType.StaticBody);
+        for (Fixture fixture : flagStart.getFixtureList())
             fixture.setUserData(this);
 
-    }
-
-    public static boolean isStatic() {
-        return flag.staticBod;
     }
 
     @Override
@@ -49,64 +47,63 @@ public class FlagPole extends InteractiveTileObject {
     }
 
     public void update(float dt) {
-        flag.update();
+        flag.update(dt);
     }
 
     public void draw(Batch batch) {
-        flag.draw(batch);
+        flag.completeLevel.draw();
     }
 
-    public class Flag extends Sprite {
-        public final  PlayScreen     screen;
-        public final  World          world;
-        private final FlagPole       pole;
-        private final TextureRegion  texture;
-        public        Body           b2body;
-        public        boolean        staticBod;
-        private       PrismaticJoint joint;
-        private       boolean        down;
+    public class Flag extends Actor {
+        public final  PlayScreen screen;
+        public final  World      world;
+        private final FlagPole   pole;
+        private       boolean    down;
+        private       Sprite     flagSprite;
+        Stage completeLevel;
 
         private Flag(PlayScreen screen, float x, float y, FlagPole pole) {
             this.screen = screen;
             this.world = screen.getWorld();
             this.pole = pole;
             down = false;
-            staticBod = false;
 
-            texture = new TextureRegion(screen.getAtlas().findRegion("flag"), 0, 0, 16, 16);
-
-            setBounds(x - 16 / MarioBros.PPM, y + 30 / MarioBros.PPM, 16 / MarioBros.PPM, 16 / MarioBros.PPM);
-            setRegion(texture);
+            flagSprite = new Sprite(new TextureRegion(screen.getAtlas().findRegion("flag"), 0, 0, 16, 16));
+            flagSprite.setBounds(x - 15.9f / MarioBros.PPM, y + 56 / MarioBros.PPM, 16 / MarioBros.PPM, 16 / MarioBros.PPM);
+            setBounds(flagSprite.getX(), flagSprite.getY(), flagSprite.getWidth(), flagSprite.getHeight());
             makeFlag();
         }
 
         private void makeFlag() {
-            Vector2 position = new Vector2(getX() + 8 / MarioBros.PPM, getY() + 34 / MarioBros.PPM);
-            Vector2 boxDims  = new Vector2(8 / MarioBros.PPM, 8 / MarioBros.PPM);
+            MoveToAction flagSlide = new MoveToAction();
+            flagSlide.setPosition(pole.flagStart.getPosition().x - 8.3f / MarioBros.PPM, (32 + 3.5f) / MarioBros.PPM);
+            flagSlide.setDuration(1.5f);
 
-            b2body = BodyFactory.getInstance().makeBody(position, boxDims, MarioBros.FLAG_BIT, BodyDef.BodyType.DynamicBody);
-            joint = BodyFactory.getInstance().connectPrismaticJoint(pole.anchor, b2body);
-            joint.setUserData(this);
+            this.addAction(flagSlide);
 
-            for (Fixture fixture : b2body.getFixtureList())
-                fixture.setUserData(this);
-
+            completeLevel = new Stage(screen.getViewport(), screen.getGame().batch);
+            completeLevel.addActor(this);
         }
 
-        void update() {
-            setPosition(b2body.getPosition().x - getWidth() / 2, b2body.getPosition().y - getHeight() / 2);
-            setRegion(texture);
-            if (!world.isLocked() && b2body.getLinearVelocity().y == 0 && down) {
-                b2body.setType(BodyDef.BodyType.StaticBody);
-                staticBod = true;
-            }
+        void update(float dt) {
+            if (down)
+                completeLevel.act(dt);
+        }
+
+        @Override
+        public void draw(Batch batch, float parentAlpha) {
+            flagSprite.draw(batch);
+        }
+
+        @Override
+        protected void positionChanged() {
+            flagSprite.setPosition(getX(), getY());
         }
 
         public void pullFlag(Mario mario) {
-            if (!down && !staticBod) {
-                joint.setMotorSpeed(-joint.getMotorSpeed());
+            if (!down) {
                 down = true;
-//                mario.goal();
+                mario.goal(pole.flagStart.getPosition().x);
             }
         }
     }

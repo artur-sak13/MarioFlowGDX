@@ -22,6 +22,7 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class PlayScreen extends AbstractScreen {
 
@@ -36,12 +37,10 @@ public class PlayScreen extends AbstractScreen {
     private Mario    mario;
     private FlagPole flag;
 
-    private float mapWidth;
 
     public PlayScreen(MarioBros game, String level) {
         super(game);
         map = new TmxMapLoader().load(level);
-//        mapWidth = ((TiledMapTileLayer) map.getLayers().get(0)).getWidth();
     }
 
     @Override
@@ -59,9 +58,6 @@ public class PlayScreen extends AbstractScreen {
         renderer = new OrthogonalTiledMapRenderer(map, 1 / MarioBros.PPM);
 
         hud = new Hud(game.batch);
-
-        float cameraLeftLimit  = (MarioBros.V_WIDTH / MarioBros.PPM) / 2;
-        float cameraRightLimit = mapWidth - (MarioBros.V_WIDTH / MarioBros.PPM) / 2;
 
         b2dr = new Box2DDebugRenderer(true, true, false, false, false, false);
 
@@ -81,7 +77,6 @@ public class PlayScreen extends AbstractScreen {
 
         game.batch.setProjectionMatrix(camera.combined);
         game.batch.begin();
-        flag.draw(game.batch);
 
 
         for (Enemy enemy : creator.getEnemies())
@@ -96,6 +91,7 @@ public class PlayScreen extends AbstractScreen {
 
         game.batch.setProjectionMatrix(hud.stage.getCamera().combined);
         hud.stage.draw();
+        flag.draw(game.batch);
 
         b2dr.render(world, camera.combined);
 
@@ -105,67 +101,6 @@ public class PlayScreen extends AbstractScreen {
         } else if (goal()) {
             game.changeScreen(MarioBros.ScreenEnum.GAME_WIN);
             dispose();
-        }
-    }
-
-    private void update(float dt) {
-        handleSpawningItems();
-
-        world.step(1 / 60f, 6, 2);
-        flag.update(dt);
-
-        for (Enemy enemy : creator.getEnemies()) {
-            enemy.update(dt);
-            if (!enemy.isDead() && (enemy.getX() < mario.getX() + 224 / MarioBros.PPM))
-                enemy.b2body.setActive(true);
-        }
-
-        for (Item item : items)
-            item.update(dt);
-
-        mario.update(dt);
-
-//        float targetX = camera.position.x;
-        if (!mario.isDead())
-            camera.position.x = MathUtils.clamp(mario.b2body.getPosition().x, viewport.getWorldWidth() / 2, (227 * 16) / MarioBros.PPM);
-//            targetX = camera.position.x = MathUtils.clamp(mario.b2body.getPosition().x, cameraLeftLimit, cameraRightLimit);
-
-//        camera.position.x = MathUtils.lerp(camera.position.x, targetX, 0.1f);
-//        if(Math.abs(camera.position.x - targetX) < 0.1f)
-//            camera.position.x = targetX;
-
-        camera.update();
-        renderer.setView(camera);
-
-        hud.update(dt);
-
-        cleanUp();
-    }
-
-//    public float getMapWidth() { return mapWidth; }
-
-    private boolean gameOver() {
-        return (mario.currentState == Mario.State.DYING && mario.getStateTimer() > 3);
-    }
-
-    private boolean goal() {
-        return (mario.currentState == Mario.State.WINNING && mario.getStateTimer() > 3 && FlagPole.isStatic());
-    }
-
-    private void handleSpawningItems() {
-        if (!spawningItems.isEmpty()) {
-            ItemDef idef = spawningItems.poll();
-            if (idef.type == Mushroom.class)
-                items.add(new Mushroom(this, idef.position.x, idef.position.y));
-            else if (idef.type == Flower.class)
-                items.add(new Flower(this, idef.position.x, idef.position.y));
-        }
-    }
-
-    private void cleanUp() {
-        for (int i = 0; i < items.size; i++) {
-            if (items.get(i).isDestroyed())
-                items.removeIndex(i);
         }
     }
 
@@ -199,6 +134,59 @@ public class PlayScreen extends AbstractScreen {
         atlas.dispose();
     }
 
+    private void update(float dt) {
+        handleSpawningItems();
+
+        world.step(1 / 60f, 6, 2);
+        flag.update(dt);
+
+        for (Enemy enemy : creator.getEnemies()) {
+            enemy.update(dt);
+            if (!enemy.isDead() && (enemy.getX() < mario.getX() + 224 / MarioBros.PPM))
+                enemy.b2body.setActive(true);
+        }
+
+        for (Item item : items)
+            item.update(dt);
+
+        mario.update(dt);
+
+        if (!mario.isDead())
+            camera.position.x = MathUtils.clamp(mario.b2body.getPosition().x, viewport.getWorldWidth() / 2, (227 * 16) / MarioBros.PPM);
+
+        camera.update();
+        renderer.setView(camera);
+
+        hud.update(dt);
+
+        cleanUp();
+    }
+
+    private boolean gameOver() {
+        return (mario.currentState == Mario.State.DYING && mario.getStateTimer() > 3);
+    }
+
+    private boolean goal() {
+        return (mario.currentState == Mario.State.WINNING && mario.getStateTimer() > 3);
+    }
+
+    private void handleSpawningItems() {
+        if (!spawningItems.isEmpty()) {
+            ItemDef idef = spawningItems.poll();
+            if (idef.type == Mushroom.class)
+                items.add(new Mushroom(this, idef.position.x, idef.position.y));
+            else if (idef.type == Flower.class)
+                items.add(new Flower(this, idef.position.x, idef.position.y));
+        }
+    }
+
+    private void cleanUp() {
+        for (int i = 0; i < items.size; i++) {
+            if (items.get(i).isDestroyed())
+                items.removeIndex(i);
+        }
+    }
+
     public TextureAtlas getAtlas() {
         return atlas;
     }
@@ -217,5 +205,13 @@ public class PlayScreen extends AbstractScreen {
 
     public Hud getHud() {
         return hud;
+    }
+
+    public Viewport getViewport() {
+        return viewport;
+    }
+
+    public MarioBros getGame() {
+        return game;
     }
 }
